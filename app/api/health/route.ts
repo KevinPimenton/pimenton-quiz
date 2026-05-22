@@ -4,13 +4,20 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const supabase = await createClient();
-    const { error } = await supabase.auth.getSession();
+    const { error: authError } = await supabase.auth.getSession();
+    if (authError) throw authError;
 
-    if (error) throw error;
+    const { error: dbError } = await supabase
+      .from("quizzes")
+      .select("id, title")
+      .limit(1);
+
+    if (dbError) throw dbError;
 
     return NextResponse.json({
       ok: true,
       supabase: "connected",
+      schema: "loaded",
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
